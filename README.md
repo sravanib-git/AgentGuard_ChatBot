@@ -4,7 +4,7 @@ The application finds original AgentGuard documentation sections and displays th
 
 ## Start on Windows
 
-1. Double-click setup.cmd once on a new checkout. It creates .venv using Python 3.12 or uv. No third-party Python packages are installed. If Python is unavailable, install Python 3.12 or uv first; uv can download Python during setup.
+1. Double-click setup.cmd once on a new checkout. It creates .venv using Python 3.12 or newer, or uv. No third-party Python packages are installed. If Python is unavailable, install Python 3.12 or newer, or uv first; uv can download Python during setup.
 2. Double-click start.cmd. Keep its terminal open.
 3. The browser opens at http://127.0.0.1:3101. Ctrl+C stops the server.
 
