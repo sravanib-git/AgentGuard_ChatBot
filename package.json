@@ -1,0 +1,1 @@
+{"name":"agentguard-documentation-final","private":true,"type":"module","scripts":{"test:browser":"node --test test/memory.test.js test/app.test.js"}}
