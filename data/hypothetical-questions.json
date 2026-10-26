@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "entries": [
+    {"page":"introduction","section":"platform","questions":["What is AgentGuard and what does it do?"]},
+    {"page":"onboarding","section":"quickstart","questions":["How do I install the SDK?","How do I connect my application?","Where do I get project credentials?","How do I configure and initialize the SDK?"]},
+    {"page":"onboarding","section":"detailed","questions":["Which environment variables are required?","How do I configure Python or Node SDK options?","How do I attach a user or tenant to a call?","How do I capture prompts and responses?"]},
+    {"page":"onboarding","section":"faq","questions":["Why are my traces missing?","Tracing works but guardrails do not, why?","Why is prompt text not visible?","Do I need to change every call site?"]},
+    {"page":"onboarding","section":"guardrail-config","questions":["Why is an enabled guardrail not firing?","Which guardrails run in my application and which on the server?","How do I stop all model calls?","How do I configure PII redaction?"]},
+    {"page":"control-plane","section":"trust-profile","questions":["How do I configure trust dimensions?","What does the trust profile score mean?"]},
+    {"page":"observability","section":"traces","questions":["How can I inspect a model call?","Where can I view trace latency tokens and cost?"]},
+    {"page":"observability","section":"sessions","questions":["How do I see an entire conversation?","How do I trace a session?"]},
+    {"page":"observability","section":"prompts","questions":["How do I manage prompt versions?"]},
+    {"page":"ai-quality","section":"judge","questions":["How do I evaluate answers with an LLM judge?"]},
+    {"page":"ai-quality","section":"datasets","questions":["How do I create a test set?"]},
+    {"page":"security","section":"guardrails","questions":["How do I enable guardrails?","Where are guardrails executed?","How can I block sensitive data?"]},
+    {"page":"security","section":"red-teaming","questions":["How do I test my agent for vulnerabilities?"]},
+    {"page":"governance","section":"compliance","questions":["How do I export compliance evidence?","Where are compliance reports?"]},
+    {"page":"governance","section":"audit-trail","questions":["Where can I see who changed a policy?"]},
+    {"page":"rbac","section":"roles","questions":["What permissions does each role have?"]},
+    {"page":"rbac","section":"assigning","questions":["How do I invite someone and assign a project role?"]},
+    {"page":"auth","section":"sign-in","questions":["How do users log in?"]},
+    {"page":"auth","section":"logout","questions":["How do I revoke an active login session?"]},
+    {"page":"auth","section":"api-keys","questions":["What is the difference between API keys and browser sessions?"]}
+  ]
+}

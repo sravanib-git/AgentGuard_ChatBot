@@ -1,0 +1,1 @@
+﻿"""AgentGuard local documentation search."""

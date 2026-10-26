@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgentGuard documentation support</title>
+<link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script>
+</head>
+<body>
+<aside><a class="brand" href="/">AG <span>AgentGuard</span></a><p class="caption">SUPPORT WORKSPACE</p><p class="active">Documentation search</p><a href="https://ag-dev.actaclad.com/docs/introduction" target="_blank" rel="noopener noreferrer">View documentation &#8599;</a><p class="prototype">Standalone prototype<br><small>For the AgentGuard console</small></p></aside>
+<main>
+<header><span>Support / <strong>Documentation search</strong></span><div><button id="new" type="button">New chat</button><button id="close" type="button">Close chat</button></div></header>
+<p id="notice" class="notice" role="status">Connecting to documentation...</p>
+<section id="closed" hidden><h1>Chat closed</h1><p>Your conversation history has been cleared.</p><button id="open" type="button">Open a new chat</button></section>
+<section id="panel">
+<div class="conversation" id="conversation">
+<div id="welcome"><h1>Find help in the documentation</h1><p>Search for an AgentGuard feature. Results include original sections and links to the full guides.</p><div id="suggestions"><button data-query="How do I install the Python SDK?">Install the Python SDK</button><button data-query="How do I inspect traces?">Inspect traces</button><button data-query="How do I assign project roles?">Assign project roles</button></div></div>
+<div id="messages" role="log" aria-live="polite" aria-label="Support conversation"></div>
+</div>
+<p id="error" class="error" role="alert" hidden></p>
+<form id="form"><label for="question">Search AgentGuard documentation</label><textarea id="question" maxlength="2000" rows="2" placeholder="For example: Where do I find my project API key?" required></textarea><div class="composer-footer"><small>Enter to search. Shift + Enter for a new line.</small><button id="send" type="submit" disabled>Search</button></div></form>
+<p class="footnote">Original documentation excerpts. No generated answers. <span id="count">0 / 2,000</span></p>
+</section>
+</main>
+</body>
+</html>
