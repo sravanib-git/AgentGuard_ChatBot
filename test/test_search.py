@@ -1,11 +1,12 @@
-﻿import copy
+import copy
 import json
 import socket
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from lib.documentation import Documentation, ROOT
+from lib.documentation import Documentation, Section, ROOT
+from lib.keywords import extract_keywords
 from lib.search import SearchIndex, query_context
 from lib.security import validate_request
 from lib.service import SupportService
@@ -20,6 +21,41 @@ class SearchTests(unittest.TestCase):
     def test_documentation_snapshot(self):
         self.assertEqual(self.documentation.page_count, 9)
         self.assertEqual(len(self.documentation.sections), 72)
+
+    def test_keywords_cover_every_sdk_section_and_are_reproducible(self):
+        generated = extract_keywords(self.documentation.sections)
+        self.assertEqual(generated, extract_keywords(self.documentation.sections))
+        self.assertEqual(len(self.documentation.keywords), 72)
+        for section in self.documentation.sections:
+            key = (section.page, section.anchor, section.language)
+            self.assertTrue(self.documentation.keywords[key])
+            self.assertTrue(generated[key])
+        self.assertIn('python', generated[('onboarding', 'quickstart', 'py')])
+        self.assertIn('npm', generated[('onboarding', 'quickstart', 'node')])
+
+    def test_metadata_matches_precede_body_and_preserve_evidence(self):
+        body = Section(1, 'body', '', 'Body', 'https://ag-dev.actaclad.com/docs/body', 'all', 'cobalt ' * 100)
+        keyword = Section(2, 'keyword', '', 'Keyword', 'https://ag-dev.actaclad.com/docs/keyword', 'all', 'Original keyword section.')
+        hypothetical = Section(3, 'question', '', 'Question', 'https://ag-dev.actaclad.com/docs/question', 'all', 'Original question section.')
+        docs = type('Docs', (), {'sections': [body, keyword, hypothetical],
+                                'keywords': {('keyword', '', 'all'): ['cobalt']},
+                                'questions': {('question', ''): ['Where is cobalt?']}})()
+        index = SearchIndex(docs)
+        matches = index.search('cobalt', [])
+        self.assertEqual({s.id for s in matches[:2]}, {2, 3})
+        self.assertEqual(matches[-1], body)
+        self.assertNotIn('cobalt', keyword.text)
+        self.assertEqual(index.search('original', []), [keyword, hypothetical])
+
+    def test_keyword_loader_rejects_invalid_and_missing_metadata(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'keywords.json'
+            for metadata in ({'version': 1, 'entries': []},
+                             {'version': 1, 'entries': [{'page': 'introduction', 'section': '', 'language': 'all', 'keywords': 'invalid'}]},
+                             {'version': 1, 'entries': [{'page': 'introduction', 'section': '', 'language': 'all', 'keywords': ['password=' + 'a' * 25]}]}):
+                path.write_text(json.dumps(metadata), encoding='utf-8')
+                with self.assertRaises(ValueError):
+                    Documentation(keywords_path=path)
 
     def test_expected_sections(self):
         cases = [('Install Python SDK', 'onboarding#quickstart'), ('Where do I set environment variables for Python?', 'onboarding#detailed'), ('Where can I inspect model call latency and token usage?', 'observability#traces'), ('How do I see an entire conversation?', 'observability#sessions'), ('How do I invite someone and assign a project role?', 'rbac#assigning'), ('Where can I export compliance evidence?', 'governance#compliance'), ('How do I revoke login sessions?', 'auth#logout'), ('How do I test an agent for vulnerabilities?', 'security#red-teaming'), ('How do I create a test set?', 'ai-quality#datasets')]

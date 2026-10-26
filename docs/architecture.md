@@ -10,12 +10,15 @@ flowchart TD
     K -->|Meaningful topic| E[BM25 search index]
     F[Validated documentation snapshot] --> E
     G[Reviewed hypothetical questions] --> E
+    L[Per-section keywords with SDK identity] --> E
     E --> H[SDK filtering and related sections]
     H --> I[Original excerpts and trusted source links]
     I --> J[Safe browser text rendering]
 ```
 
 Documentation and index structures are created at startup and read during requests. Each request has its own query, selected sections and output. No server component stores conversation history. Browser memory is owned by one ChatMemory instance; a version counter and AbortController prevent late results appearing after Close or New chat.
+
+Search uses two BM25 indexes: section keywords plus hypothetical questions form the first tier; original titles and text form the fallback tier. Metadata matches precede full-text-only matches, with a relevance cutoff within each tier. Existing related-section rules may include companion sections. `generate_keywords.py` produces keywords for every page/anchor/language identity using local section text. The loader validates complete keyword coverage and rejects recognizable secrets. Metadata never replaces the original excerpts.
 
 The index uses term frequency, positive inverse-document frequency, and section-length normalization with k1=1.2 and b=0.75. Titles receive additional weight. Hypothetical questions provide additional matching vocabulary but never change original source text. SDK selection comes from user messages only. The latest independent user topic anchors ambiguous follow-ups. This is a heuristic, not semantic understanding.
 
@@ -25,7 +28,7 @@ Source URLs must match the approved AgentGuard documentation host and slug. The 
 
 The only automatic networking during app use is the browser talking to its local server. Opening a source link visits the documentation website. Setup can download Python if uv needs it. There is no model or answer-generation stage.
 
-The source corpus is a fixed JSON snapshot. The old application, its virtual environment, provider code, importer and UI code were not copied. Only documentation content and reviewed question mappings were reused. The new .venv was created independently.
+The source corpus is a fixed JSON snapshot containing individual documentation sections and export provenance.
 
 ## Empty and incomplete questions
 

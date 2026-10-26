@@ -46,7 +46,9 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.post({})[0], 400)
         self.assertEqual(self.post({'question': 'hi'}, {'Origin': 'https://evil.test'})[0], 403)
         self.assertEqual(self.request('POST', '/api/chat', '{}')[0], 415)
-        self.assertEqual(self.request('POST', '/api/chat', 'x'*100001, {'Content-Type': 'application/json'})[0], 413)
+        # The server rejects oversized lengths before reading the body. Sending
+        # an unread body can reset the connection on Windows before we read 413.
+        self.assertEqual(self.request('POST', '/api/chat', '', {'Content-Type': 'application/json', 'Content-Length': '100001'})[0], 413)
         self.assertEqual(self.request('PUT', '/api/chat')[0], 405)
         self.assertEqual(self.request('POST', '/api/chat', '{', {'Content-Type': 'application/json'})[0], 400)
         for _ in range(21):

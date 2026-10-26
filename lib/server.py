@@ -1,6 +1,5 @@
-﻿"""Loopback-only prototype HTTP server using Python's standard library."""
+"""Loopback-only prototype HTTP server using Python's standard library."""
 import json
-import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -92,10 +91,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(400, {'error': 'Incomplete request body.'})
             value = json.loads(body)
             result = self.server.service.answer(value)
-        except (ValueError, UnicodeError) as error:
+        except ValueError as error:
             message = 'Invalid JSON.' if isinstance(error, (json.JSONDecodeError, UnicodeError)) else str(error)
             return self.send(400, {'error': message})
-        except (TimeoutError, socket.timeout):
+        except TimeoutError:
             return self.send(408, {'error': 'Request timed out.'})
         except Exception:
             return self.send(500, {'error': 'Search could not be completed. Please retry.'})

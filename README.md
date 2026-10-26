@@ -1,6 +1,4 @@
-# AgentGuard documentation support - fresh implementation
-
-This project was written from scratch in AG_ChatBot_Final. Only the documentation snapshot and reviewed search-question metadata were reused from the earlier project. The existing AG_ChatBot folder is unchanged.
+# AgentGuard documentation support
 
 The application finds original AgentGuard documentation sections and displays their source links. It uses local BM25 keyword search. It has no LLM, RAG generation, API key, model prompt, vector database or external search service.
 
@@ -10,7 +8,7 @@ The application finds original AgentGuard documentation sections and displays th
 2. Double-click start.cmd. Keep its terminal open.
 3. The browser opens at http://127.0.0.1:3101. Ctrl+C stops the server.
 
-Port 3101 lets this project coexist with the earlier prototype on 3100. An optional .env file may contain PORT=3102 to select another port. No .env file or credentials are required by default. An existing server belonging to this project is reused; another application on the configured port produces a clear error.
+The default port is 3101. An optional .env file may contain PORT=3102 to select another port. No .env file or credentials are required by default. An existing server belonging to this project is reused; another application on the configured port produces a clear error.
 
 Direct commands:
 
@@ -37,7 +35,9 @@ The browser stores history only in memory. Close chat, New chat, navigation and 
 |---|---|
 | run.py | Entry point, port settings, duplicate-start detection and browser opening |
 | lib/documentation.py | Validates local documents and source links; creates numbered immutable sections |
-| lib/search.py | Fresh pure-Python BM25 implementation, SDK filtering and follow-up hints |
+| lib/search.py | BM25 keyword/question ranking, full-text fallback, SDK filtering and follow-up hints |
+| lib/keywords.py | Extracts important keywords from section text |
+| generate_keywords.py | Regenerates section-keyword metadata |
 | lib/security.py | Request/history limits and common-secret checks |
 | lib/service.py | Coordinates fixed replies and original documentation results |
 | lib/server.py | Standard-library HTTP server, static-file allowlist, headers and rate/body limits |
@@ -48,22 +48,27 @@ The browser stores history only in memory. Close chat, New chat, navigation and 
 | public/app.js | UI events, local API requests and safe text rendering |
 | data/knowledge.json | Reused documentation snapshot: nine guides, 72 sections |
 | data/hypothetical-questions.json | Reused reviewed search phrasing; never displayed as source text |
+| data/section-keywords.json | Keywords for each page, section and SDK variant |
 | test/ | Python service/HTTP/startup/clarification tests and JavaScript input/memory tests |
 | docs/architecture.md | Data flow, boundaries and limitations |
 | setup.cmd, start.cmd, start.ps1 | Windows setup/start/test commands |
 | .env.example | Optional port-setting example |
 | .gitignore | Excludes environment files, bytecode and logs |
 | package.json | Optional browser-memory test command; no npm dependencies |
-| .venv/ | Newly created local Python environment; do not commit |
+| .venv/ | Local Python runtime required by the startup scripts; do not commit |
 
 ## Documentation updates
 
-This version consumes a validated JSON snapshot. It does not include the old TSX importer or its parser dependencies. When docs change, produce an updated export with the existing importer in the earlier project and replace data/knowledge.json here. Review hypothetical-question mappings against the updated section anchors. Restart after replacing data and run the tests; the current snapshot-count test must be updated if the number of sections intentionally changes.
+Each of the 72 sections has its own keywords in `data/section-keywords.json`, keyed by page, section anchor, and SDK language. Keywords are extracted from section headings, important AgentGuard concepts present in the text, technical option names, and distinctive words. You can review and edit these lists. Search first ranks keyword and hypothetical-question matches together with BM25, then uses full-text-only matches to fill remaining result slots. Existing SDK filters, related-section inclusion, and result limits still apply. Keywords and hypothetical questions are search metadata; displayed excerpts remain original documentation.
+
+After changing the documentation snapshot, regenerate keywords with `.\.venv\Scripts\python.exe -B generate_keywords.py`, review the JSON, and restart the server. Regeneration replaces manual edits. Missing keyword coverage is reported at startup.
+
+Replace data/knowledge.json with an updated documentation export when guides change. The app uses the individual sections; a combined page-text copy is unnecessary. Review hypothetical-question mappings against updated section anchors. Run the tests after regenerating keywords; update the snapshot-count test if the number of sections intentionally changes.
 
 Do not edit documentation statements to conceal contradictions. Some guardrail-execution descriptions differ across source sections; search preserves both perspectives when relevant.
 
 ## Verification and deployment
 
-Verification passes 26 Python test methods, including subcases across nine documentation workflows, blank/ambiguous HTTP requests and clarification/topic handling, plus three JavaScript UI-input and browser-memory tests. Tests cover offline/verbatim results, query metadata, SDK context, input limits, secret filtering, URLs, API limits and reset/stale-answer logic. Actual console browser lifecycle behavior still needs review.
+The suite contains 29 Python tests and three JavaScript tests covering search metadata and fallback priority, original excerpts, SDK context, clarification, input limits, secret filtering, URLs, HTTP limits, startup, and chat reset behavior. Actual console browser lifecycle behavior still needs review.
 
 The standard-library server is a loopback-only standalone prototype. It is not the AgentGuard console integration or a production server. Console authentication, hosting and actual Support-panel component integration remain separate tasks. Secret-pattern checks are limited heuristics and can miss unfamiliar formats or block harmless text.

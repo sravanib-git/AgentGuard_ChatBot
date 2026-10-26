@@ -1,4 +1,4 @@
-﻿"""Load original documentation and validate source identities and links."""
+"""Load original documentation and validate source identities and links."""
 import json
 import re
 from dataclasses import dataclass
@@ -21,7 +21,7 @@ class Section:
 
 
 class Documentation:
-    def __init__(self, path=None, questions_path=None):
+    def __init__(self, path=None, questions_path=None, keywords_path=None, load_keywords=True):
         path = Path(path) if path else ROOT / 'data/knowledge.json'
         value = json.loads(path.read_text(encoding='utf-8-sig'))
         if not isinstance(value, dict) or value.get('schemaVersion') != 1 or value.get('demo') is not False:
@@ -80,3 +80,25 @@ class Documentation:
                 raise ValueError('Invalid search-question metadata.')
             if key in valid:
                 self.questions.setdefault(key, []).extend(q for q in questions if not contains_secret(q))
+        self.keywords = {}
+        if load_keywords:
+            keywords_path = Path(keywords_path) if keywords_path else ROOT / 'data/section-keywords.json'
+            metadata = json.loads(keywords_path.read_text(encoding='utf-8-sig'))
+            if not isinstance(metadata, dict) or metadata.get('version') != 1 or not isinstance(metadata.get('entries'), list):
+                raise ValueError('Invalid section-keyword metadata.')
+            valid_keywords = {(s.page, s.anchor, s.language) for s in self.sections}
+            for entry in metadata['entries']:
+                if not isinstance(entry, dict):
+                    raise ValueError('Invalid section-keyword entry.')
+                key = (entry.get('page'), entry.get('section'), entry.get('language'))
+                if any(not isinstance(part, str) for part in key):
+                    raise ValueError('Invalid section-keyword identity.')
+                keywords = entry.get('keywords')
+                if not isinstance(keywords, list) or not keywords or any(not isinstance(k, str) or not k.strip() or len(k) > 500 or contains_secret(k) for k in keywords):
+                    raise ValueError('Invalid section keywords.')
+                if key in self.keywords:
+                    raise ValueError('Repeated section-keyword entry.')
+                if key in valid_keywords:
+                    self.keywords[key] = tuple(keywords)
+            if valid_keywords - self.keywords.keys():
+                raise ValueError('Missing section keywords. Run generate_keywords.py after updating documentation.')

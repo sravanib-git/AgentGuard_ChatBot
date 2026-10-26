@@ -72,31 +72,51 @@ class SearchIndex:
     def __init__(self, documentation):
         self.sections = tuple(documentation.sections)
         self.frequencies = []
+        self.metadata_frequencies = []
         for section in self.sections:
             extra = documentation.questions.get((section.page, section.anchor), [])
-            self.frequencies.append(Counter(terms(' '.join([section.title, section.title, section.text, *extra]))))
+            keywords = getattr(documentation, 'keywords', {}).get((section.page, section.anchor, section.language), ())
+            self.metadata_frequencies.append(Counter(terms(' '.join([*keywords, *extra]))))
+            self.frequencies.append(Counter(terms(' '.join([section.title, section.title, section.text]))))
         self.lengths = [sum(counts.values()) for counts in self.frequencies]
         self.average = sum(self.lengths) / max(1, len(self.lengths)) or 1
         self.df = Counter(term for counts in self.frequencies for term in counts)
+        self.metadata_lengths = [sum(c.values()) for c in self.metadata_frequencies]
+        self.metadata_average = sum(self.metadata_lengths) / max(1, len(self.sections)) or 1
+        self.metadata_df = Counter(term for counts in self.metadata_frequencies for term in counts)
+
+    def score(self, keywords, counts, length, average, df):
+        score = 0
+        for term in keywords:
+            frequency = counts[term]
+            idf = math.log(1 + (len(self.sections) - df[term] + .5) / (df[term] + .5))
+            score += idf * frequency * 2.2 / (frequency + 1.2 * (.25 + .75 * length / average))
+        return score
 
     def search(self, question, history, max_sections=5, max_characters=30000):
         query, language = query_context(question, history)
         keywords = set(terms(query))
         if not keywords and re.search(r'\bagentguard\b', query, re.I):
             keywords.update(('platform', 'overview'))
-        eligible, ranked = [], []
-        for section, counts, length in zip(self.sections, self.frequencies, self.lengths):
+        eligible, primary, fallback = [], [], []
+        for section, counts, length, metadata, metadata_length in zip(self.sections, self.frequencies, self.lengths, self.metadata_frequencies, self.metadata_lengths):
             if language != 'all' and section.language not in ('all', language):
                 continue
             eligible.append(section)
-            score = 0
-            for term in keywords:
-                frequency = counts[term]
-                idf = math.log(1 + (len(self.sections) - self.df[term] + .5) / (self.df[term] + .5))
-                score += idf * frequency * 2.2 / (frequency + 1.2 * (.25 + .75 * length / self.average))
+            score = self.score(keywords, metadata, metadata_length, self.metadata_average, self.metadata_df)
             if score > 0:
-                ranked.append((score, section))
-        ranked.sort(key=lambda item: (-item[0], item[1].id))
+                primary.append((score, section))
+            else:
+                score = self.score(keywords, counts, length, self.average, self.df)
+                if score > 0:
+                    fallback.append((score, section))
+        # Metadata matches always precede full-text-only matches. Apply the
+        # relevance cutoff within each tier because their scores differ.
+        ranked = []
+        for tier in (primary, fallback):
+            tier.sort(key=lambda item: (-item[0], item[1].id))
+            if tier:
+                ranked.extend(item for item in tier if item[0] >= tier[0][0] * .3)
         selected, used, seen = [], 0, set()
 
         def add(section):
@@ -115,8 +135,6 @@ class SearchIndex:
             companions.extend((('onboarding', 'guardrail-config'), ('security', 'guardrails')))
         for page, anchor in companions:
             add(next((s for s in eligible if s.page == page and s.anchor == anchor), None))
-        for score, section in ranked:
-            if score < ranked[0][0] * .3:
-                break
+        for _, section in ranked:
             add(section)
         return selected
